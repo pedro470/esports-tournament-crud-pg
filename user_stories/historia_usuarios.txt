@@ -1,0 +1,80 @@
+A separação em Interface e Serviço é ótima, então vou focar no comportamento (o "o quê") para que você possa implementar a lógica no serviço e a chamada na interface.
+
+🎯 Atores Principais
+Vamos focar em dois atores: o Organizador (Admin) e o Usuário da Equipe (Capitão/Membro).
+
+1. Gerenciamento de Equipes e Jogadores
+Aqui é o básico: montar o time sem deixar virar bagunça.
+
+👑 Como Organizador:
+Regra do Clube da Luta: Eu quero definir o limite máximo de equipes no início da configuração, para que o campeonato não vire um battle royale infinito de 500 times.
+
+O Porteiro: Eu preciso que o sistema impeça o cadastro de novas equipes se o limite já tiver sido atingido (retornar erro na cara dura).
+
+Auditoria de Nomes: Eu quero poder editar o nome de uma equipe caso eles escolham algo ofensivo ou impronunciável.
+
+O Grande Expurgo: Eu preciso excluir uma equipe inteira (e seus jogadores em cascata) caso eles desistam ou sejam banidos por hacks.
+
+🛡️ Como Equipe (Representante):
+Inscrição: Eu quero registrar minha equipe fornecendo um nome único (nada de "Equipe 1" repetida).
+
+Recrutamento: Eu quero adicionar jogadores à minha equipe, fornecendo Nome e Nickname.
+
+Limite de Roster: Eu preciso que o sistema valide o número máximo/mínimo de jogadores por time (ex: min 3, max 5), pra não ter time de um homem só contra um exército.
+
+Demissão: Eu quero remover um jogador do meu time caso ele seja ruim de serviço (ou tenha saído da banda).
+
+2. Gerenciamento do Campeonato e Partidas (Jogos)
+Aqui é onde a mágica acontece e o código geralmente quebra.
+
+👑 Como Organizador:
+O Botão Vermelho: Eu preciso que o sistema só libere a criação de partidas (tabela Jogos) APÓS o status do campeonato mudar para "Iniciado" (e isso só deve ocorrer se o nº mínimo de equipes for atingido).
+
+Matchmaking Manual: Eu quero criar uma partida definindo: Time A vs Time B, Data/Hora (opcional) e Identificador da Partida (ex: "Final", "Grupo A - Jogo 1").
+
+Evitar Clones: Eu preciso que o sistema impeça que uma equipe jogue contra si mesma (o sistema trava se id_time_a == id_time_b).
+
+🛡️ Como Equipe:
+Agenda: Eu quero listar todos os jogos onde minha equipe (ID da minha equipe) está escalada, para saber contra quem vou perder.
+
+Stalking: Eu quero ver a lista de todas as equipes inscritas para analisar a concorrência.
+
+3. Resultados e Classificação
+A hora da verdade e do choro.
+
+👑 Como Organizador:
+O Juiz: Eu quero registrar o resultado de uma partida existente (inserir na tabela Resultados), informando o placar ou quem venceu.
+
+Sem Trapaça: Eu preciso que o sistema impeça a alteração de um resultado de uma partida que já foi finalizada/consolidada (ou exija uma senha de admin/confirmação extra).
+
+O Placar Geral: Eu quero visualizar a tabela de classificação gerada automaticamente a partir da soma dos resultados (Vitória = 3 pts, etc.).
+
+🛡️ Como Equipe:
+Histórico de Humilhação (ou Glória): Eu quero ver o histórico de resultados do meu time.
+
+Ranking: Eu quero ver a tabela geral ordenada por pontuação decrescente, para saber quão longe estou do topo.
+
+🛠️ Resumo do Fluxo para seu Diagrama
+Para facilitar seu fluxograma, imagine os estados do sistema como barreiras:
+
+Estado: INSCRIÇÃO ABERTA
+
+Permite: CRUD Equipes, CRUD Jogadores.
+
+Bloqueia: Criar Jogos, Inserir Resultados.
+
+Trigger de Mudança: Organizador digita "INICIAR CAMPEONATO".
+
+Validação: Count(Equipes) >= Minimo e Count(Equipes) <= Maximo.
+
+Estado: EM ANDAMENTO
+
+Bloqueia: Criar novas Equipes, Adicionar/Remover Jogadores (Roster Lock).
+
+Permite: Criar Jogos (Matchmaking), Inserir Resultados.
+
+Estado: FINALIZADO
+
+Bloqueia: Tudo (apenas leitura).
+
+Permite: Gerar Relatório Final/Ranking.
